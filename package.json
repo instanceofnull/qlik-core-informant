@@ -1,0 +1,22 @@
+{
+  "name": "qlik-core-informant",
+  "version": "0.0.1",
+  "description": "Command line tool for interrogating Qlik Core Containers.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Qlik"
+  ],
+  "bin": {
+    "qci": "./qci.js"
+  },
+  "author": "Justin Skaggs",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^2.15.1",
+    "rxjs": "^5.5.0",
+    "rxq": "^1.0.1"
+  }
+}
