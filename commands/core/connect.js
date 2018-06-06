@@ -1,4 +1,5 @@
-const { connectSession } = require('rxq/connect');
+const { shareReplay } = require('rxjs/operators'),
+  { connectSession } = require('rxq/connect');
 
 module.exports = (replServer) => {
   let { context } = replServer;
@@ -10,6 +11,7 @@ module.exports = (replServer) => {
       // error checking
       if (!server) {
         console.error('The connect command requires a host');
+        replServer.displayPrompt();
         return;
       }
 
@@ -18,22 +20,24 @@ module.exports = (replServer) => {
       // update context variables
       const session = {
         host,
-        session$: connectSession({ host, port })
+        session$: connectSession({ host, port }).pipe(shareReplay(1))
       };
       context.sessions.push(session);
 
-      // if we don't have an active session, set the new
-      // session as the active session and update the repl
-      // prompt.
-      if(!context.activeSession) {
-        context.session$ = session.session$;
-        context.host = host;
-        context.port = port;
-        replServer.setPrompt(`(qci | ${host}:${port})> `);
-      }
+      context.session$ = session.session$;
+      context.host = host;
+      context.port = port;
 
-      // ouput
-      this.displayPrompt();
+      context.session$.subscribe(
+        () => {
+          replServer.setPrompt(`(qci | ${host}:${port})> `)
+          replServer.displayPrompt();
+        },
+        err => {
+          console.log('connect.error: ', err);
+          replServer.displayPrompt();
+        }
+      );
     }
   });
 

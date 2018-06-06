@@ -1,11 +1,11 @@
-const { map, shareReplay, switchMap } = require('rxjs/operators');
-const { openDoc } = require('rxq/Global');
+const { map, shareReplay, switchMap, take } = require('rxjs/operators'),
+  { openDoc } = require('rxq/Global');
 
 module.exports = (replServer) => {
   let { context } = replServer;
 
   replServer.defineCommand('use', {
-    help: 'use <app|sheet|object|dimension|measure|bookmark|story> <name|qId>',
+    help: 'use <app> <qvf file name>',
     action(args) {
       // arg parsing
       let [type, ...qId] = args.split(' ');
@@ -20,17 +20,34 @@ module.exports = (replServer) => {
       switch (type) {
         case 'app':
           const { session$, host, port } = context;
+
+          // tables specific check
+          if (!session$) {
+            console.log('.use app requires an active session. (.connect <host>)');
+            replServer.displayPrompt();
+            return;
+          }
+
           context.app$ = session$.pipe(
             switchMap(h => openDoc(h, qId)),
             shareReplay(1)
           );
 
-          replServer.setPrompt(`(qci | ${host}:${port} | ${qId})> `);
-          replServer.displayPrompt();
+          // connect the app here, so it will be available in other commands
+          context.app$.pipe(take(1)).subscribe(
+            () => {
+              replServer.setPrompt(`(qci | ${host}:${port} | ${qId})> `);
+              replServer.displayPrompt();
+            },
+            err => {
+              console.log('error connecting to app: ', err);
+              replServer.displayPrompt();
+            }
+          );
           break;
 
         default:
-          console.log(`listing ${type}`);
+          break;
       }
     }
   });
