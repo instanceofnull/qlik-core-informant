@@ -15,16 +15,10 @@ module.exports = (replServer) => {
         return;
       }
 
-      const [host, port] = server.split(':');
+      const [host, port = 80] = server.split(':');
 
       // update context variables
-      const session = {
-        host,
-        session$: connectSession({ host, port }).pipe(shareReplay(1))
-      };
-      context.sessions.push(session);
-
-      context.session$ = session.session$;
+      context.session$ = connectSession({ host, port }).pipe(shareReplay(1));
       context.host = host;
       context.port = port;
 

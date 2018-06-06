@@ -1,11 +1,16 @@
-const { map, shareReplay, switchMap, take } = require('rxjs/operators'),
-  { openDoc } = require('rxq/Global');
+const { of } = require('rxjs/observable/of'),
+  { combineLatest } = require('rxjs/observable/combineLatest'),
+  { map, reduce, shareReplay, switchMap, take, tap } = require('rxjs/operators'),
+  { openDoc, getDocList, oSName } = require('rxq/Global');
+
+const cmd = 'use',
+  help = `${cmd} <app> <qId>`;
 
 module.exports = (replServer) => {
   let { context } = replServer;
 
-  replServer.defineCommand('use', {
-    help: 'use <app> <qvf file name>',
+  replServer.defineCommand(cmd, {
+    help,
     action(args) {
       // arg parsing
       let [type, ...qId] = args.split(' ');
@@ -13,7 +18,7 @@ module.exports = (replServer) => {
 
       // error checking
       if (!(type && qId)) {
-        console.error('The use command requires a type and name/qId arguments');
+        console.error(`.${cmd} command requires a type and name/qId arguments`);
         return;
       }
 
@@ -23,15 +28,35 @@ module.exports = (replServer) => {
 
           // tables specific check
           if (!session$) {
-            console.log('.use app requires an active session. (.connect <host>)');
+            console.log(`.${cmd} app requires an active session. (.connect <host>)`);
             replServer.displayPrompt();
             return;
           }
 
-          context.app$ = session$.pipe(
-            switchMap(h => openDoc(h, qId)),
+          const isQlikCore$ = session$.pipe(
+            switchMap(h => oSName(h)),
+            map(f => f === 'Linux')
+          );
+
+          context.app$ = combineLatest(session$, isQlikCore$).pipe(
+            switchMap(([h, isQlikCore]) => {
+              if(isQlikCore) {
+                return openDoc(h, qId);
+              } else {
+                return getDocList(h).pipe(
+                  map(docs => docs.filter(f => f.qDocName === qId).reduce((acc, x) => x.qDocId, "")),
+                  switchMap(app => openDoc(h, app))
+                );
+              }
+            }),
             shareReplay(1)
           );
+
+          // context.app$ = session$.pipe(
+          //   switchMap(h => getDocList(h), (h, docs) => of({ h, docs })),
+          //   switchMap(h => openDoc(h, qId)),
+          //   shareReplay(1)
+          // );
 
           // connect the app here, so it will be available in other commands
           context.app$.pipe(take(1)).subscribe(
@@ -47,6 +72,8 @@ module.exports = (replServer) => {
           break;
 
         default:
+          console.log(`.${cmd} requires a valid type and qId. (.use <app> <qvf file name>)`);
+          replServer.displayPrompt();
           break;
       }
     }
