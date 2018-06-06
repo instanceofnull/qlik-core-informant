@@ -8,12 +8,10 @@
                                                                                             
 A command line/REPL utility to get the lowdown on your Qlik Core environment(s).
 
-## Setup
+## Installation
 
 ```
-git clone $url
-npm i
-npm link
+npm i -g qlik-core-informant
 ```
 
 ## Running
@@ -26,15 +24,22 @@ qci
 
 ```
 .help
-.connect <ip:port>
-.list <apps|sheets|objects|dimensions|measures|bookmarks|stories|variables>
-.use <app|sheet|object|dimension|measure|bookmark|story|variable> <qId>
-.evaluate <expr>
+.connect        <ip:port>
+.list           <apps|sheets|tables>
+.use            <app> <name>
+.evaluate       evaluates multiple expressions // eg. .evaluate sum(Sales) sum([Total Revenue]) max(Year)
 ```
 
 ## Custom commands
 
 ```
-.multi-evluate <expressions>
-               sum(sales) sum(revenue) max(year)
+.simple-evaluate        evalutes a single expression // eg. .simple-evaluate sum(Sales)
+.version                prints engine version.
+```
+## Development Setup
+
+```
+git clone https://github.com/instanceofnull/qlik-core-informant.git
+npm i
+npm link
 ```
