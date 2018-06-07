@@ -27,13 +27,14 @@ qci
 .connect        <ip:port>
 .list           <apps|sheets|tables>
 .use            <app> <name>
-.evaluate       evaluates multiple expressions // eg. .evaluate sum(Sales) sum([Total Revenue]) max(Year)
 ```
 
 ## Custom commands
 
 ```
-.simple-evaluate        evalutes a single expression // eg. .simple-evaluate sum(Sales)
+.evaluate           evaluates multiple expressions // eg. .evaluate sum(Sales) sum([Total Revenue]) max(Year)
+.simple-evaluate    evalutes a single expression // eg. .simple-evaluate sum(Sales)
+.sample             samples data from specified data model table // eg. .sample Sales Fact
 .version                prints engine version.
 ```
 ## Development Setup

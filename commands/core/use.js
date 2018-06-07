@@ -1,7 +1,7 @@
 const { of } = require('rxjs/observable/of'),
   { combineLatest } = require('rxjs/observable/combineLatest'),
   { map, reduce, shareReplay, switchMap, take, tap } = require('rxjs/operators'),
-  { openDoc, getDocList, oSName } = require('rxq/Global');
+  { openDoc, getDocList, isDesktopMode } = require('rxq/Global');
 
 const cmd = 'use',
   help = `${cmd} <app> <qId>`;
@@ -34,14 +34,15 @@ module.exports = (replServer) => {
           }
 
           const isQlikCore$ = session$.pipe(
-            switchMap(h => oSName(h)),
-            map(f => f === 'Linux')
+            switchMap(h => isDesktopMode(h))
           );
 
           context.app$ = combineLatest(session$, isQlikCore$).pipe(
             switchMap(([h, isQlikCore]) => {
+              // core & sense desktop
               if(isQlikCore) {
                 return openDoc(h, qId);
+              // server
               } else {
                 return getDocList(h).pipe(
                   map(docs => docs.filter(f => f.qDocName === qId).reduce((acc, x) => x.qDocId, "")),
@@ -51,12 +52,6 @@ module.exports = (replServer) => {
             }),
             shareReplay(1)
           );
-
-          // context.app$ = session$.pipe(
-          //   switchMap(h => getDocList(h), (h, docs) => of({ h, docs })),
-          //   switchMap(h => openDoc(h, qId)),
-          //   shareReplay(1)
-          // );
 
           // connect the app here, so it will be available in other commands
           context.app$.pipe(take(1)).subscribe(

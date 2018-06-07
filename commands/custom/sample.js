@@ -3,7 +3,7 @@ const { switchMap } = require('rxjs/operators'),
   cTable = require('console.table');
 
 const cmd = 'sample',
-  help = `samples data from specified data model table // eg. .${cmd} [Sales Fact]`;
+  help = `samples data from specified table // eg. .${cmd} Sales Fact`;
 
 module.exports = (replServer) => {
   let { context } = replServer;
